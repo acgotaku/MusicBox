@@ -15,6 +15,13 @@ import (
 	"net/url"
 )
 
+type MusicDetail struct {
+	Id     int    `json:"id"`
+	Name   string `json:"name"`
+	Artist string `json:"artist"`
+	Album  string `json:"album"`
+}
+
 type netEaseSearch struct {
 	Code   int        `json:"code"`
 	Result ResultType `json:result`
@@ -66,19 +73,20 @@ func NeteaseSearchHandler(w http.ResponseWriter, r *http.Request) {
 	response, err := ioutil.ReadAll(resp.Body)
 	var netEase netEaseSearch
 	json.Unmarshal(response, &netEase)
-	w.Write(response)
-	fmt.Printf("%+v\n", netEase)
+	musicDetail := make([]MusicDetail, len(netEase.Result.Songs))
+	for i := 0; i < len(musicDetail); i++ {
+		musicDetail[i] = MusicDetail{netEase.Result.Songs[i].Id, netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
+	}
+	music, _ := json.Marshal(musicDetail)
+	w.Write(music)
+
 }
 
 func NeteaseTrackHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	data := url.Values{}
-	data.Set("s", r.URL.Query().Get("keyword"))
-	data.Add("offset", "0")
-	data.Add("limit", "20")
-	data.Add("type", "1")
-	req, err := http.NewRequest("POST", searchUrl, bytes.NewBufferString(data.Encode()))
+	data := fmt.Sprintf(`{"ids":[%s],"br":320000,"csrf_token":""}`, r.URL.Query().Get("id"))
+	req, err := http.NewRequest("POST", trackUrl, bytes.NewBufferString(encryptedRequest(data)))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", "http://music.163.com/")
 
@@ -89,10 +97,10 @@ func NeteaseTrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	response, err := ioutil.ReadAll(resp.Body)
-	var netEase netEaseSearch
-	json.Unmarshal(response, &netEase)
+	// var netEase netEaseSearch
+	// json.Unmarshal(response, &netEase)
 	w.Write(response)
-	fmt.Printf("%+v\n", netEase)
+	// fmt.Printf("%+v\n", netEase)
 }
 
 func encryptedRequest(text string) string {
@@ -125,7 +133,6 @@ func createSecretKey(size int) string {
 func aesEncrypt(text []byte, key []byte) string {
 	iv := []byte("0102030405060708")
 	plaintext := pad(text)
-	fmt.Printf("%v\n", len(plaintext))
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -134,7 +141,6 @@ func aesEncrypt(text []byte, key []byte) string {
 
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(ciphertext[:], plaintext)
-	fmt.Printf("%s\n", base64.StdEncoding.EncodeToString(ciphertext))
 	return base64.StdEncoding.EncodeToString(ciphertext)
 }
 

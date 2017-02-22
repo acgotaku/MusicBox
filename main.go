@@ -25,6 +25,7 @@ func main() {
 
 	json.Unmarshal(raw, &config)
 	http.HandleFunc("/api/search", service.NeteaseSearchHandler)
+	http.HandleFunc("/api/track", service.NeteaseTrackHandler)
 	log.Printf("Start listen serve %s", config.Port)
 	http.ListenAndServe(config.Port, nil)
 

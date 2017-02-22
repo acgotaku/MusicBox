@@ -5,9 +5,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -93,13 +95,21 @@ func NeteaseTrackHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%+v\n", netEase)
 }
 
-func encryptedRequest(text string) {
-	// var modulus = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b72" +
-	// 	"5152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbd" +
-	// 	"a92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe48" +
-	// 	"75d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7"
-	// var nonce = "0CoJUm6Qyw8W8jud"
-	// var pubKey = "010001"
+func encryptedRequest(text string) string {
+	var modulus = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b72" +
+		"5152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbd" +
+		"a92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe48" +
+		"75d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7"
+	var nonce = "0CoJUm6Qyw8W8jud"
+	var pubKey = "010001"
+	var secKey = createSecretKey(16)
+	encText := aesEncrypt([]byte(aesEncrypt([]byte(text), []byte(nonce))), []byte(secKey))
+	encSecKey := rsaEncrypt(secKey, pubKey, modulus)
+	data := url.Values{}
+	data.Set("params", encText)
+	data.Add("encSecKey", encSecKey)
+	return data.Encode()
+
 }
 
 func createSecretKey(size int) string {
@@ -112,7 +122,7 @@ func createSecretKey(size int) string {
 }
 
 // func aesEncrypt(text string, key string) string {
-func AesEncrypt(text []byte, key []byte) string {
+func aesEncrypt(text []byte, key []byte) string {
 	iv := []byte("0102030405060708")
 	plaintext := pad(text)
 	fmt.Printf("%v\n", len(plaintext))
@@ -132,4 +142,26 @@ func pad(src []byte) []byte {
 	padding := aes.BlockSize - len(src)%aes.BlockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(src, padtext...)
+}
+
+func rsaEncrypt(text string, key string, modulus string) string {
+	text = reverse(text)
+	text = hex.EncodeToString([]byte(text))
+	base := new(big.Int)
+	base.SetString(text, 16)
+	exp := new(big.Int)
+	exp.SetString(key, 16)
+	mod := new(big.Int)
+	mod.SetString(modulus, 16)
+	result := new(big.Int)
+	result.Exp(base, exp, nil)
+	result.Mod(result, mod)
+	return fmt.Sprintf("%0256x", result)
+}
+func reverse(s string) string {
+	r := []rune(s)
+	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
+		r[i], r[j] = r[j], r[i]
+	}
+	return string(r)
 }

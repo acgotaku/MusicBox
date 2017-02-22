@@ -25,9 +25,6 @@ func main() {
 
 	json.Unmarshal(raw, &config)
 	http.HandleFunc("/api/search", service.NeteaseSearchHandler)
-	key := []byte("5d02ee4df79bb64b")
-	plaintext := []byte("sigbgoZY+5dHJl5fY4Ri/HqkGvfWKHbAX+p1OK2wwYDqcy+1sfkBm0TliBddazu1")
-	service.AesEncrypt(plaintext, key)
 	log.Printf("Start listen serve %s", config.Port)
 	http.ListenAndServe(config.Port, nil)
 

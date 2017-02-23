@@ -1,31 +1,38 @@
 package service
 
 import (
+	"MusicBox/model"
 	"MusicBox/service/netease"
-)
+	"MusicBox/service/qq"
+	"MusicBox/service/xiami"
+	"encoding/json"
 
-type MusicDetail struct {
-	Id     string `json:"id"`
-	Name   string `json:"name"`
-	Artist string `json:"artist"`
-	Album  string `json:"album"`
-}
+	"net/http"
+	"strconv"
+)
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	keyword := r.URL.Query().Get("keyword")
-	limit := r.URL.Query().Get("limit")
-	offset := r.URL.Query().Get("offset")
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	source := r.URL.Query().Get("source")
-
+	if limit == 0 {
+		limit = 20
+	}
+	if page == 0 {
+		page = 1
+	}
+	var musicDetail []model.MusicDetail
 	switch source {
 	case "qq":
-		qq.SearchMusic(keyword, limit, offset)
+		musicDetail = qq.SearchMusic(keyword, limit, page)
 	case "xiami":
-		xiami.SearchMusic(keyword, limit, offset)
+		musicDetail = xiami.SearchMusic(keyword, limit, page)
 	default:
-		netease.SearchMusic(keyword, limit, offset)
+		musicDetail = netease.SearchMusic(keyword, limit, page)
 	}
+	music, _ := json.Marshal(musicDetail)
 	w.Write(music)
 }

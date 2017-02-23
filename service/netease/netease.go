@@ -1,7 +1,7 @@
 package netease
 
 import (
-	"MusicBox/service"
+	"MusicBox/model"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
@@ -54,12 +54,13 @@ const searchUrl = "http://music.163.com/api/search/pc"
 
 const trackUrl = "http://music.163.com/weapi/song/enhance/player/url?csrf_token="
 
-func SearchMusic(keyword string, limit int, page int) []service.MusicDetail {
+func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	data := url.Values{}
 	data.Set("s", keyword)
-	data.Add("offset", limit*(page-1))
-	data.Add("limit", limit)
+	data.Add("offset", strconv.Itoa(limit*(page-1)))
+	data.Add("limit", strconv.Itoa(limit))
 	data.Add("type", "1")
+
 	req, err := http.NewRequest("POST", searchUrl, bytes.NewBufferString(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", "http://music.163.com/")
@@ -73,9 +74,9 @@ func SearchMusic(keyword string, limit int, page int) []service.MusicDetail {
 	response, err := ioutil.ReadAll(resp.Body)
 	var netEase netEaseSearch
 	json.Unmarshal(response, &netEase)
-	musicDetail := make([]service.MusicDetail, len(netEase.Result.Songs))
+	musicDetail := make([]model.MusicDetail, len(netEase.Result.Songs))
 	for i := 0; i < len(musicDetail); i++ {
-		musicDetail[i] = service.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
+		musicDetail[i] = model.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
 	}
 	return musicDetail
 
@@ -102,9 +103,9 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	response, err := ioutil.ReadAll(resp.Body)
 	var netEase netEaseSearch
 	json.Unmarshal(response, &netEase)
-	musicDetail := make([]service.MusicDetail, len(netEase.Result.Songs))
+	musicDetail := make([]model.MusicDetail, len(netEase.Result.Songs))
 	for i := 0; i < len(musicDetail); i++ {
-		musicDetail[i] = service.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
+		musicDetail[i] = model.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
 	}
 	music, _ := json.Marshal(musicDetail)
 	w.Write(music)

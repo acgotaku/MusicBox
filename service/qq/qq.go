@@ -2,12 +2,13 @@ package qq
 
 // http://i.y.qq.com/s.music/fcgi-bin/search_for_qq_cp?format=json&platform=h5&w=tsubasa&n=20&p=1
 import (
-	"MusicBox/service"
+	"MusicBox/model"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 type QQMusicSearch struct {
@@ -37,15 +38,13 @@ type ArtistType struct {
 
 const searchUrl = "http://i.y.qq.com/s.music/fcgi-bin/search_for_qq_cp"
 
-func SearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	data := url.Values{}
-	data.Set("w", r.URL.Query().Get("keyword"))
+	data.Set("w", keyword)
 	data.Add("format", "json")
 	data.Add("platform", "h5")
-	data.Add("n", "20")
-	data.Add("p", "1")
+	data.Add("n", strconv.Itoa(limit))
+	data.Add("p", strconv.Itoa(page))
 	req, err := http.NewRequest("GET", searchUrl+"?"+data.Encode(), nil)
 
 	client := &http.Client{}
@@ -57,12 +56,11 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	response, err := ioutil.ReadAll(resp.Body)
 	var qqMusic QQMusicSearch
 	json.Unmarshal(response, &qqMusic)
-	musicDetail := make([]service.MusicDetail, len(qqMusic.Data.Song.List))
+	musicDetail := make([]model.MusicDetail, len(qqMusic.Data.Song.List))
 	for i := 0; i < len(musicDetail); i++ {
-		musicDetail[i] = service.MusicDetail{qqMusic.Data.Song.List[i].Id, qqMusic.Data.Song.List[i].Name, qqMusic.Data.Song.List[i].Artist[0].Name, qqMusic.Data.Song.List[i].Album}
+		musicDetail[i] = model.MusicDetail{qqMusic.Data.Song.List[i].Id, qqMusic.Data.Song.List[i].Name, qqMusic.Data.Song.List[i].Artist[0].Name, qqMusic.Data.Song.List[i].Album}
 	}
-	music, _ := json.Marshal(musicDetail)
-	w.Write(music)
+	return musicDetail
 }
 
 func TrackHandler(w http.ResponseWriter, r *http.Request) {

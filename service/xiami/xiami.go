@@ -2,52 +2,43 @@ package xiami
 
 import (
 	"MusicBox/model"
-	"bytes"
 	"encoding/json"
+
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 )
 
-const searchUrl = "http://music.163.com/api/search/pc"
+// http://api.xiami.com/web?v=2.0&app_key=1&key=tsubasa&page=1&limit=20&r=search/songs
+const searchUrl = "http://api.xiami.com/web"
 
-type netEaseSearch struct {
-	Code   int        `json:"code"`
-	Result ResultType `json:result`
-}
-
-type ResultType struct {
-	QueryCorrected []string   `json:"queryCorrected"`
-	SongCount      int        `json:songCount`
-	Songs          []SongType `json:songs`
-}
-type SongType struct {
-	Id     int          `json:"id"`
-	Name   string       `json:"name"`
-	Mp3Url string       `json:"mp3Url"`
-	Artist []ArtistType `json:"artists"`
-	Album  AlbumType    `json:"album"`
+type XiamiSearch struct {
+	Code int      `json:"state"`
+	Data DataType `json:data`
 }
 
-type AlbumType struct {
-	Name   string `json:"name"`
-	ImgUrl string `json:"picUrl"`
+type DataType struct {
+	Totalnum int            `json:"total"`
+	Songs    []SongListType `json:songs`
 }
-type ArtistType struct {
-	Name string `json:"name"`
+type SongListType struct {
+	Id     int    `json:"song_id"`
+	Name   string `json:"song_name"`
+	Mp3Url string `json:"listen_file"`
+	Artist string `json:"artist_name"`
+	Album  string `json:"album_name"`
 }
 
 func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	data := url.Values{}
-	data.Set("s", keyword)
-	data.Add("offset", strconv.Itoa(limit*(page-1)))
+	data.Set("key", keyword)
+	data.Add("app_key", "1")
+	data.Add("page", strconv.Itoa(page))
 	data.Add("limit", strconv.Itoa(limit))
-	data.Add("type", "1")
-	req, err := http.NewRequest("POST", searchUrl, bytes.NewBufferString(data.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", "http://music.163.com/")
-
+	data.Add("r", "search/songs")
+	req, err := http.NewRequest("GET", searchUrl+"?"+data.Encode(), nil)
+	req.Header.Set("Referer", "http://m.xiami.com/")
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -55,11 +46,11 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	}
 	defer resp.Body.Close()
 	response, err := ioutil.ReadAll(resp.Body)
-	var netEase netEaseSearch
-	json.Unmarshal(response, &netEase)
-	musicDetail := make([]model.MusicDetail, len(netEase.Result.Songs))
+	var xiamiMusic XiamiSearch
+	json.Unmarshal(response, &xiamiMusic)
+	musicDetail := make([]model.MusicDetail, len(xiamiMusic.Data.Songs))
 	for i := 0; i < len(musicDetail); i++ {
-		musicDetail[i] = model.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
+		musicDetail[i] = model.MusicDetail{strconv.Itoa(xiamiMusic.Data.Songs[i].Id), xiamiMusic.Data.Songs[i].Name, xiamiMusic.Data.Songs[i].Artist, xiamiMusic.Data.Songs[i].Album}
 	}
 	return musicDetail
 

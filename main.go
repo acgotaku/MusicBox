@@ -1,7 +1,8 @@
 package main
 
 import (
-	"MusicBox/service"
+	"MusicBox/service/netease"
+	// "MusicBox/service/qq"
 	"encoding/json"
 	"flag"
 	"io/ioutil"
@@ -24,8 +25,8 @@ func main() {
 	var config Config
 
 	json.Unmarshal(raw, &config)
-	http.HandleFunc("/api/search", service.NeteaseSearchHandler)
-	http.HandleFunc("/api/track", service.NeteaseTrackHandler)
+	http.HandleFunc("/api/search", netease.SearchHandler)
+	http.HandleFunc("/api/track", netease.TrackHandler)
 	log.Printf("Start listen serve %s", config.Port)
 	http.ListenAndServe(config.Port, nil)
 

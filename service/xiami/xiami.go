@@ -69,7 +69,7 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 }
 
 // http://api.xiami.com/web?v=2.0&app_key=1&r=song/detail&id=1769150238
-func GetTrack(id string) string {
+func GetTrack(id string) model.TrackDetail {
 	trackUrl := fmt.Sprintf(`http://api.xiami.com/web?v=2.0&app_key=1&r=song/detail&id=%s`, id)
 	req, err := http.NewRequest("GET", trackUrl, nil)
 	req.Header.Set("Referer", "http://m.xiami.com/")
@@ -82,7 +82,7 @@ func GetTrack(id string) string {
 	response, err := ioutil.ReadAll(resp.Body)
 	var track TrackDetail
 	json.Unmarshal(response, &track)
-	// fmt.Printf("%s\n", response)
-	return track.Track.Song.Url
 
+	trackDetail := model.TrackDetail{200, track.Track.Song.Url}
+	return trackDetail
 }

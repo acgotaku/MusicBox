@@ -71,7 +71,7 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 }
 
 // http://base.music.qq.com/fcgi-bin/fcg_musicexpress.fcg?json=3&format=json
-func GetTrack(id string) string {
+func GetTrack(id string) model.TrackDetail {
 	req, err := http.NewRequest("GET", trackUrl, nil)
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -84,6 +84,6 @@ func GetTrack(id string) string {
 	json.Unmarshal(response, &track)
 	//var url = "http://cc.stream.qqmusic.qq.com/C200" +  track.id.slice('qqtrack_'.length)  + ".m4a?vkey=" +token + "&fromtag=0&guid=780782017";
 	url := fmt.Sprintf(`http://cc.stream.qqmusic.qq.com/C200%s.m4a?vkey=%s&fromtag=0&guid=780782017`, id, track.Key)
-	return url
-
+	trackDetail := model.TrackDetail{200, url}
+	return trackDetail
 }

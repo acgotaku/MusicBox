@@ -91,7 +91,7 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 
 }
 
-func GetTrack(id string) string {
+func GetTrack(id string) model.TrackDetail {
 	data := fmt.Sprintf(`{"ids":[%s],"br":320000,"csrf_token":""}`, id)
 	req, err := http.NewRequest("POST", trackUrl, bytes.NewBufferString(encryptedRequest(data)))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -106,7 +106,8 @@ func GetTrack(id string) string {
 	response, err := ioutil.ReadAll(resp.Body)
 	var track TrackDetail
 	json.Unmarshal(response, &track)
-	return track.Track[0].Url
+	trackDetail := model.TrackDetail{200, track.Track[0].Url}
+	return trackDetail
 
 }
 

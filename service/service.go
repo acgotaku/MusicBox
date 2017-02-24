@@ -43,14 +43,15 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	track := r.URL.Query().Get("id")
 	source := r.URL.Query().Get("source")
 
-	var trackUrl string
+	var trackDetail model.TrackDetail
 	switch source {
 	case "qq":
-		trackUrl = qq.GetTrack(track)
+		trackDetail = qq.GetTrack(track)
 	case "xiami":
-		trackUrl = xiami.GetTrack(track)
+		trackDetail = xiami.GetTrack(track)
 	default:
-		trackUrl = netease.GetTrack(track)
+		trackDetail = netease.GetTrack(track)
 	}
-	w.Write([]byte(trackUrl))
+	trackJson, _ := json.Marshal(trackDetail)
+	w.Write([]byte(trackJson))
 }

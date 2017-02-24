@@ -3,8 +3,8 @@ package qq
 // http://i.y.qq.com/s.music/fcgi-bin/search_for_qq_cp?format=json&platform=h5&w=tsubasa&n=20&p=1
 import (
 	"MusicBox/model"
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -36,7 +36,14 @@ type ArtistType struct {
 	Name string `json:"name"`
 }
 
+type TrackDetail struct {
+	Code int    `json:"code"`
+	Key  string `json:"key"`
+}
+
 const searchUrl = "http://i.y.qq.com/s.music/fcgi-bin/search_for_qq_cp"
+
+const trackUrl = "http://base.music.qq.com/fcgi-bin/fcg_musicexpress.fcg?json=3&format=json&guid=780782017"
 
 func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	data := url.Values{}
@@ -63,17 +70,9 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	return musicDetail
 }
 
-func TrackHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	data := url.Values{}
-	data.Set("w", r.URL.Query().Get("keyword"))
-	data.Add("format", "json")
-	data.Add("platform", "h5")
-	data.Add("n", "20")
-	data.Add("p", "1")
-	req, err := http.NewRequest("GET", searchUrl, bytes.NewBufferString(data.Encode()))
-
+// http://base.music.qq.com/fcgi-bin/fcg_musicexpress.fcg?json=3&format=json
+func GetTrack(id string) string {
+	req, err := http.NewRequest("GET", trackUrl, nil)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -81,7 +80,10 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	response, err := ioutil.ReadAll(resp.Body)
-
-	w.Write(response)
+	var track TrackDetail
+	json.Unmarshal(response, &track)
+	//var url = "http://cc.stream.qqmusic.qq.com/C200" +  track.id.slice('qqtrack_'.length)  + ".m4a?vkey=" +token + "&fromtag=0&guid=780782017";
+	url := fmt.Sprintf(`http://cc.stream.qqmusic.qq.com/C200%s.m4a?vkey=%s&fromtag=0&guid=780782017`, id, track.Key)
+	return url
 
 }

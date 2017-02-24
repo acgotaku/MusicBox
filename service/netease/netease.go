@@ -50,6 +50,15 @@ type ArtistType struct {
 	Name string `json:"name"`
 }
 
+type TrackDetail struct {
+	Code  int         `json:"code"`
+	Track []TrackType `json:"data"`
+}
+
+type TrackType struct {
+	Url string `json:"url"`
+}
+
 const searchUrl = "http://music.163.com/api/search/pc"
 
 const trackUrl = "http://music.163.com/weapi/song/enhance/player/url?csrf_token="
@@ -82,40 +91,8 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 
 }
 
-func SearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	data := url.Values{}
-	data.Set("s", r.URL.Query().Get("keyword"))
-	data.Add("offset", "10")
-	data.Add("limit", "20")
-	data.Add("type", "1")
-	req, err := http.NewRequest("POST", searchUrl, bytes.NewBufferString(data.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", "http://music.163.com/")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	response, err := ioutil.ReadAll(resp.Body)
-	var netEase netEaseSearch
-	json.Unmarshal(response, &netEase)
-	musicDetail := make([]model.MusicDetail, len(netEase.Result.Songs))
-	for i := 0; i < len(musicDetail); i++ {
-		musicDetail[i] = model.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
-	}
-	music, _ := json.Marshal(musicDetail)
-	w.Write(music)
-
-}
-
-func TrackHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	data := fmt.Sprintf(`{"ids":[%s],"br":320000,"csrf_token":""}`, r.URL.Query().Get("id"))
+func GetTrack(id string) string {
+	data := fmt.Sprintf(`{"ids":[%s],"br":320000,"csrf_token":""}`, id)
 	req, err := http.NewRequest("POST", trackUrl, bytes.NewBufferString(encryptedRequest(data)))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", "http://music.163.com/")
@@ -127,10 +104,10 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	response, err := ioutil.ReadAll(resp.Body)
-	// var netEase netEaseSearch
-	// json.Unmarshal(response, &netEase)
-	w.Write(response)
-	// fmt.Printf("%+v\n", netEase)
+	var track TrackDetail
+	json.Unmarshal(response, &track)
+	return track.Track[0].Url
+
 }
 
 func encryptedRequest(text string) string {

@@ -36,3 +36,21 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	music, _ := json.Marshal(musicDetail)
 	w.Write(music)
 }
+
+func TrackHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	track := r.URL.Query().Get("id")
+	source := r.URL.Query().Get("source")
+
+	var trackUrl string
+	switch source {
+	case "qq":
+		trackUrl = qq.GetTrack(track)
+	case "xiami":
+		trackUrl = xiami.GetTrack(track)
+	default:
+		trackUrl = netease.GetTrack(track)
+	}
+	w.Write([]byte(trackUrl))
+}

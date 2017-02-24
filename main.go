@@ -25,7 +25,7 @@ func main() {
 	var config Config
 	json.Unmarshal(raw, &config)
 	http.HandleFunc("/api/search", service.SearchHandler)
-	// http.HandleFunc("/api/track", netease.TrackHandler)
+	http.HandleFunc("/api/track", service.TrackHandler)
 	log.Printf("Start listen serve %s", config.Port)
 	http.ListenAndServe(config.Port, nil)
 

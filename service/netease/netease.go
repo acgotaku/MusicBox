@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type MusicDetail struct {
@@ -59,9 +60,13 @@ type TrackType struct {
 	Url string `json:"url"`
 }
 
-const searchUrl = "http://music.163.com/api/search/pc"
+//202.201.14.183
 
-const trackUrl = "http://music.163.com/weapi/song/enhance/player/url?csrf_token="
+const (
+	searchUrl = "http://music.163.com/api/search/pc"
+	trackUrl  = "http://music.163.com/weapi/song/enhance/player/url?csrf_token="
+	cdnIP     = "202.201.14.183"
+)
 
 func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	data := url.Values{}
@@ -91,7 +96,7 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 
 }
 
-func GetTrack(id string) model.TrackDetail {
+func GetTrack(id string, country string) model.TrackDetail {
 	data := fmt.Sprintf(`{"ids":[%s],"br":320000,"csrf_token":""}`, id)
 	req, err := http.NewRequest("POST", trackUrl, bytes.NewBufferString(encryptedRequest(data)))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -107,6 +112,9 @@ func GetTrack(id string) model.TrackDetail {
 	var track TrackDetail
 	json.Unmarshal(response, &track)
 	trackDetail := model.TrackDetail{200, track.Track[0].Url}
+	if country != "china" {
+		trackDetail.Mp3Url = "http://" + cdnIP + "/" + strings.Split(trackDetail.Mp3Url, "http://")[1] + "?wshc_tag=0&&wsid_tag=b7fa6c76&wsiphost=ipdbm"
+	}
 	return trackDetail
 
 }

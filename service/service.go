@@ -50,7 +50,7 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	case "xiami":
 		trackDetail = xiami.GetTrack(track)
 	default:
-		trackDetail = netease.GetTrack(track)
+		trackDetail = netease.GetTrack(track, "japan")
 	}
 	trackJson, _ := json.Marshal(trackDetail)
 	w.Write([]byte(trackJson))

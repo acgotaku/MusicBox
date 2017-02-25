@@ -1,6 +1,8 @@
 # MusicBox
 
-## 整合了网易,QQ音乐,虾米的音乐API服务，支持境外客户端使用。但服务端需要架设在中国大陆进行使用。
+## 整合了网易,QQ音乐,虾米的音乐API服务，支持境外客户端使用。
+
+FrontEnd:https://github.com/acgotaku/MusicPlayer
 
 #### 搜索接口API
 

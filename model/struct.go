@@ -1,5 +1,11 @@
 package model
 
+type MusicSearch struct {
+	Code  int           `json:"code"`
+	Data  []MusicDetail `json:"data"`
+	Total int           `json:"total"`
+}
+
 type MusicDetail struct {
 	Id     string `json:"id"`
 	Name   string `json:"name"`

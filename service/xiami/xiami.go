@@ -42,7 +42,7 @@ type SongType struct {
 	Url string `json:"listen_file"`
 }
 
-func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
+func SearchMusic(keyword string, limit int, page int) model.MusicSearch {
 	data := url.Values{}
 	data.Set("key", keyword)
 	data.Add("app_key", "1")
@@ -64,7 +64,11 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	for i := 0; i < len(musicDetail); i++ {
 		musicDetail[i] = model.MusicDetail{strconv.Itoa(xiamiMusic.Data.Songs[i].Id), xiamiMusic.Data.Songs[i].Name, xiamiMusic.Data.Songs[i].Artist, xiamiMusic.Data.Songs[i].Album}
 	}
-	return musicDetail
+	var musicSearch model.MusicSearch
+	musicSearch.Code = 200
+	musicSearch.Data = musicDetail
+	musicSearch.Total = xiamiMusic.Data.Totalnum
+	return musicSearch
 
 }
 

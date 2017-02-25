@@ -68,7 +68,7 @@ const (
 	cdnIP     = "202.201.14.183"
 )
 
-func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
+func SearchMusic(keyword string, limit int, page int) model.MusicSearch {
 	data := url.Values{}
 	data.Set("s", keyword)
 	data.Add("offset", strconv.Itoa(limit*(page-1)))
@@ -88,11 +88,16 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	response, err := ioutil.ReadAll(resp.Body)
 	var netEase netEaseSearch
 	json.Unmarshal(response, &netEase)
+
 	musicDetail := make([]model.MusicDetail, len(netEase.Result.Songs))
 	for i := 0; i < len(musicDetail); i++ {
 		musicDetail[i] = model.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
 	}
-	return musicDetail
+	var musicSearch model.MusicSearch
+	musicSearch.Code = 200
+	musicSearch.Data = musicDetail
+	musicSearch.Total = netEase.Result.SongCount
+	return musicSearch
 
 }
 

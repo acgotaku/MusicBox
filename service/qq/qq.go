@@ -45,7 +45,7 @@ const searchUrl = "http://i.y.qq.com/s.music/fcgi-bin/search_for_qq_cp"
 
 const trackUrl = "http://base.music.qq.com/fcgi-bin/fcg_musicexpress.fcg?json=3&format=json&guid=780782017"
 
-func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
+func SearchMusic(keyword string, limit int, page int) model.MusicSearch {
 	data := url.Values{}
 	data.Set("w", keyword)
 	data.Add("format", "json")
@@ -67,7 +67,11 @@ func SearchMusic(keyword string, limit int, page int) []model.MusicDetail {
 	for i := 0; i < len(musicDetail); i++ {
 		musicDetail[i] = model.MusicDetail{qqMusic.Data.Song.List[i].Id, qqMusic.Data.Song.List[i].Name, qqMusic.Data.Song.List[i].Artist[0].Name, qqMusic.Data.Song.List[i].Album}
 	}
-	return musicDetail
+	var musicSearch model.MusicSearch
+	musicSearch.Code = 200
+	musicSearch.Data = musicDetail
+	musicSearch.Total = qqMusic.Data.Song.Totalnum
+	return musicSearch
 }
 
 // http://base.music.qq.com/fcgi-bin/fcg_musicexpress.fcg?json=3&format=json

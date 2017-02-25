@@ -6,7 +6,7 @@ import (
 	"MusicBox/service/qq"
 	"MusicBox/service/xiami"
 	"encoding/json"
-
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -23,6 +23,11 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if page == 0 {
 		page = 1
+	}
+	if keyword == "" {
+		nullResponse := fmt.Sprintf(`{"code":404,"data":[],"total":0}`)
+		w.Write([]byte(nullResponse))
+		return
 	}
 	var musicSearch model.MusicSearch
 	switch source {
@@ -45,6 +50,11 @@ func TrackHandler(w http.ResponseWriter, r *http.Request) {
 	country := r.URL.Query().Get("country")
 	if country == "" {
 		country = "china"
+	}
+	if track == "" {
+		nullResponse := fmt.Sprintf(`{"code":404,"mp3Url":""}`)
+		w.Write([]byte(nullResponse))
+		return
 	}
 	var trackDetail model.TrackDetail
 	switch source {

@@ -114,13 +114,19 @@ func GetTrack(id string, country string) model.TrackDetail {
 	}
 	defer resp.Body.Close()
 	response, err := ioutil.ReadAll(resp.Body)
+	fmt.Printf("%s\n", response)
 	var track TrackDetail
 	json.Unmarshal(response, &track)
-	trackDetail := model.TrackDetail{200, track.Track[0].Url}
-	if country != "china" {
-		trackDetail.Mp3Url = "http://" + cdnIP + "/" + strings.Split(trackDetail.Mp3Url, "http://")[1] + "?wshc_tag=0&&wsid_tag=b7fa6c76&wsiphost=ipdbm"
+	var song model.TrackDetail
+	if track.Code == 200 {
+		song = model.TrackDetail{track.Code, track.Track[0].Url}
+	} else {
+		song = model.TrackDetail{400, ""}
 	}
-	return trackDetail
+	if country != "china" {
+		song.Mp3Url = "http://" + cdnIP + "/" + strings.Split(song.Mp3Url, "http://")[1] + "?wshc_tag=0&&wsid_tag=b7fa6c76&wsiphost=ipdbm"
+	}
+	return song
 
 }
 

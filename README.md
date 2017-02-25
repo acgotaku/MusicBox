@@ -1,5 +1,7 @@
 # MusicBox
 
+## 整合了网易,QQ音乐,虾米的音乐API服务，支持境外客户端使用。但服务端需要架设在中国大陆进行使用。
+
 #### 搜索接口API
 
 GET `/api/search?keyword=<search keyword>&limit=<number per page>&page=<page number start from 1>&source=<data source: netease qq xiami>`

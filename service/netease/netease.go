@@ -26,11 +26,11 @@ type MusicDetail struct {
 }
 
 type netEaseSearch struct {
-	Code   int        `json:"code"`
-	Result ResultType `json:result`
+	Code   int             `json:"code"`
+	Result ResultMusicType `json:result`
 }
 
-type ResultType struct {
+type ResultMusicType struct {
 	QueryCorrected []string   `json:"queryCorrected"`
 	SongCount      int        `json:songCount`
 	Songs          []SongType `json:songs`
@@ -60,12 +60,38 @@ type TrackType struct {
 	Url string `json:"url"`
 }
 
-//202.201.14.183
+type netEasePlayList struct {
+	Code   int                `json:"code"`
+	Result ResultPlayListType `json:result`
+}
 
+type ResultPlayListType struct {
+	PlayListCount int            `json:playlistCount`
+	PlayLists     []PlayListType `json:playlists`
+}
+type PlayListType struct {
+	CoverImgUrl string `json:"coverImgUrl"`
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+}
+
+type netEasePlayListDetail struct {
+	Code   int                      `json:"code"`
+	Result ResultPlayListDetailType `json:result`
+}
+
+type ResultPlayListDetailType struct {
+	TrackCount int        `json:trackCount`
+	Tracks     []SongType `json:tracks`
+}
+
+//202.201.14.183
+// http://music.163.com/api/playlist/detail?id=15451634
 const (
-	searchUrl = "http://music.163.com/api/search/pc"
-	trackUrl  = "http://music.163.com/weapi/song/enhance/player/url?csrf_token="
-	cdnIP     = "202.201.14.183"
+	searchUrl   = "http://music.163.com/api/search/pc"
+	playListUrl = "http://music.163.com/api/playlist/detail"
+	trackUrl    = "http://music.163.com/weapi/song/enhance/player/url?csrf_token="
+	cdnIP       = "202.201.14.183"
 )
 
 func SearchMusic(keyword string, limit int, page int) model.MusicSearch {
@@ -94,9 +120,72 @@ func SearchMusic(keyword string, limit int, page int) model.MusicSearch {
 		musicDetail[i] = model.MusicDetail{strconv.Itoa(netEase.Result.Songs[i].Id), netEase.Result.Songs[i].Name, netEase.Result.Songs[i].Artist[0].Name, netEase.Result.Songs[i].Album.Name}
 	}
 	var musicSearch model.MusicSearch
-	musicSearch.Code = 200
+	musicSearch.Code = netEase.Code
 	musicSearch.Data = musicDetail
 	musicSearch.Total = netEase.Result.SongCount
+	return musicSearch
+
+}
+
+func SearchPlayList(keyword string, limit int, page int) model.PlayListSearch {
+	data := url.Values{}
+	data.Set("s", keyword)
+	data.Add("offset", strconv.Itoa(limit*(page-1)))
+	data.Add("limit", strconv.Itoa(limit))
+	data.Add("type", "1000")
+
+	req, err := http.NewRequest("POST", searchUrl, bytes.NewBufferString(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", "http://music.163.com/")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	response, err := ioutil.ReadAll(resp.Body)
+	var netEase netEasePlayList
+	json.Unmarshal(response, &netEase)
+
+	playListDetail := make([]model.PlayListDetail, len(netEase.Result.PlayLists))
+	for i := 0; i < len(playListDetail); i++ {
+		playListDetail[i] = model.PlayListDetail{strconv.Itoa(netEase.Result.PlayLists[i].Id), netEase.Result.PlayLists[i].Name}
+	}
+	var playListSearch model.PlayListSearch
+	playListSearch.Code = netEase.Code
+	playListSearch.Data = playListDetail
+	playListSearch.Total = netEase.Result.PlayListCount
+	return playListSearch
+
+}
+
+func GetPlayList(id string) model.MusicSearch {
+	data := url.Values{}
+	data.Set("id", id)
+
+	req, err := http.NewRequest("GET", playListUrl+"?"+data.Encode(), nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", "http://music.163.com/")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	response, err := ioutil.ReadAll(resp.Body)
+	var netEase netEasePlayListDetail
+	json.Unmarshal(response, &netEase)
+
+	musicDetail := make([]model.MusicDetail, netEase.Result.TrackCount)
+	for i := 0; i < len(musicDetail); i++ {
+		musicDetail[i] = model.MusicDetail{strconv.Itoa(netEase.Result.Tracks[i].Id), netEase.Result.Tracks[i].Name, netEase.Result.Tracks[i].Artist[0].Name, netEase.Result.Tracks[i].Album.Name}
+	}
+	var musicSearch model.MusicSearch
+	musicSearch.Code = netEase.Code
+	musicSearch.Data = musicDetail
+	musicSearch.Total = netEase.Result.TrackCount
 	return musicSearch
 
 }

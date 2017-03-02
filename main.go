@@ -26,6 +26,7 @@ func main() {
 	json.Unmarshal(raw, &config)
 	http.HandleFunc("/api/search", service.SearchHandler)
 	http.HandleFunc("/api/track", service.TrackHandler)
+	http.HandleFunc("/api/playlist", service.PlayListHandler)
 	log.Printf("Start listen serve %s", config.Port)
 	http.ListenAndServe(config.Port, nil)
 

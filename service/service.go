@@ -18,6 +18,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	source := r.URL.Query().Get("source")
+	searchType := r.URL.Query().Get("type")
 	if limit == 0 {
 		limit = 20
 	}
@@ -27,6 +28,12 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	if keyword == "" {
 		nullResponse := fmt.Sprintf(`{"code":404,"data":[],"total":0}`)
 		w.Write([]byte(nullResponse))
+		return
+	}
+	if searchType == "playlist" {
+		playListSearch := netease.SearchPlayList(keyword, limit, page)
+		playList, _ := json.Marshal(playListSearch)
+		w.Write(playList)
 		return
 	}
 	var musicSearch model.MusicSearch
@@ -40,6 +47,33 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	music, _ := json.Marshal(musicSearch)
 	w.Write(music)
+}
+
+func PlayListHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	playlist := r.URL.Query().Get("id")
+	source := r.URL.Query().Get("source")
+	country := r.URL.Query().Get("country")
+	if country == "" {
+		country = "china"
+	}
+	if playlist == "" {
+		nullResponse := fmt.Sprintf(`{"code":404,"data":[],"total":0}`)
+		w.Write([]byte(nullResponse))
+		return
+	}
+	var playListDetail model.MusicSearch
+	switch source {
+	// case "qq":
+	// 	trackDetail = qq.GetTrack(track)
+	// case "xiami":
+	// 	trackDetail = xiami.GetTrack(track)
+	default:
+		playListDetail = netease.GetPlayList(playlist)
+	}
+	playListJson, _ := json.Marshal(playListDetail)
+	w.Write([]byte(playListJson))
 }
 
 func TrackHandler(w http.ResponseWriter, r *http.Request) {
